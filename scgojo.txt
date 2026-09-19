@@ -1,0 +1,907 @@
+--========================================================--
+--       ✦ GOJO SATORU PROJECT • TRADE PANEL ✦          --
+--                 FINAL VERSION                         --
+--========================================================--
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+--========================================================--
+-- CONFIG
+--========================================================--
+
+local COLORS = {
+	Background = Color3.fromRGB(10, 11, 20),
+	Card = Color3.fromRGB(18, 19, 32),
+	Card2 = Color3.fromRGB(24, 25, 43),
+
+	Blue = Color3.fromRGB(82, 150, 255),
+	Cyan = Color3.fromRGB(76, 220, 255),
+	Purple = Color3.fromRGB(145, 95, 255),
+
+	White = Color3.fromRGB(245, 247, 255),
+	Muted = Color3.fromRGB(145, 150, 170),
+
+	Green = Color3.fromRGB(70, 220, 135),
+	Red = Color3.fromRGB(240, 75, 95),
+	Yellow = Color3.fromRGB(255, 195, 70),
+}
+
+--========================================================--
+-- REMOTES
+--========================================================--
+
+local Network = ReplicatedStorage:WaitForChild("Network")
+local TradeService = Network:WaitForChild("TradeService")
+local RE = TradeService:WaitForChild("RE")
+
+local RequestTrade = RE:WaitForChild("RequestTrade")
+local ChangeOffer = RE:WaitForChild("ChangeOffer")
+local AdvanceTrade = RE:WaitForChild("AdvanceTrade")
+local CancelTrade = RE:WaitForChild("CancelTrade")
+local RespondToRequest = RE:WaitForChild("RespondToRequest")
+local TradeEvent = RE:WaitForChild("TradeEvent")
+
+--========================================================--
+-- REMOVE OLD GUI
+--========================================================--
+
+local old = PlayerGui:FindFirstChild("GojoSatoruTrade")
+
+if old then
+	old:Destroy()
+end
+
+--========================================================--
+-- GUI
+--========================================================--
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "GojoSatoruTrade"
+gui.ResetOnSpawn = false
+gui.IgnoreGuiInset = true
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+gui.Parent = PlayerGui
+
+local main = Instance.new("Frame")
+main.Name = "Main"
+main.Size = UDim2.fromOffset(400, 570)
+main.Position = UDim2.new(0.5, -200, 0.5, -285)
+main.BackgroundColor3 = COLORS.Background
+main.BorderSizePixel = 0
+main.ClipsDescendants = true
+main.Parent = gui
+
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 16)
+mainCorner.Parent = main
+
+local stroke = Instance.new("UIStroke")
+stroke.Color = Color3.fromRGB(75, 90, 150)
+stroke.Thickness = 1.5
+stroke.Transparency = 0.15
+stroke.Parent = main
+
+local gradient = Instance.new("UIGradient")
+gradient.Color = ColorSequence.new({
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(13, 16, 31)),
+	ColorSequenceKeypoint.new(0.5, Color3.fromRGB(20, 17, 38)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(9, 12, 24)),
+})
+gradient.Rotation = 135
+gradient.Parent = main
+
+--========================================================--
+-- TOP GLOW
+--========================================================--
+
+local glow = Instance.new("Frame")
+glow.Size = UDim2.new(1, 0, 0, 4)
+glow.BackgroundColor3 = COLORS.Cyan
+glow.BorderSizePixel = 0
+glow.Parent = main
+
+local glowGradient = Instance.new("UIGradient")
+glowGradient.Color = ColorSequence.new({
+	ColorSequenceKeypoint.new(0, COLORS.Purple),
+	ColorSequenceKeypoint.new(0.5, COLORS.Cyan),
+	ColorSequenceKeypoint.new(1, COLORS.Blue),
+})
+glowGradient.Parent = glow
+
+--========================================================--
+-- HEADER
+--========================================================--
+
+local header = Instance.new("Frame")
+header.Size = UDim2.new(1, 0, 0, 76)
+header.BackgroundTransparency = 1
+header.Parent = main
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, -120, 0, 30)
+title.Position = UDim2.fromOffset(20, 12)
+title.BackgroundTransparency = 1
+title.Text = "✦  GOJO SATORU PROJECT"
+title.TextColor3 = COLORS.White
+title.TextSize = 19
+title.Font = Enum.Font.GothamBold
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Parent = header
+
+local subtitle = Instance.new("TextLabel")
+subtitle.Size = UDim2.new(1, -120, 0, 20)
+subtitle.Position = UDim2.fromOffset(22, 42)
+subtitle.BackgroundTransparency = 1
+subtitle.Text = "TRADE  •  BULK OFFER"
+subtitle.TextColor3 = COLORS.Muted
+subtitle.TextSize = 10
+subtitle.Font = Enum.Font.GothamMedium
+subtitle.TextXAlignment = Enum.TextXAlignment.Left
+subtitle.Parent = header
+
+local minimize = Instance.new("TextButton")
+minimize.Size = UDim2.fromOffset(34, 30)
+minimize.Position = UDim2.new(1, -82, 0, 15)
+minimize.BackgroundColor3 = Color3.fromRGB(38, 40, 62)
+minimize.Text = "−"
+minimize.TextColor3 = COLORS.White
+minimize.TextSize = 20
+minimize.Font = Enum.Font.GothamBold
+minimize.AutoButtonColor = false
+minimize.Parent = header
+
+local minCorner = Instance.new("UICorner")
+minCorner.CornerRadius = UDim.new(0, 8)
+minCorner.Parent = minimize
+
+local close = Instance.new("TextButton")
+close.Size = UDim2.fromOffset(34, 30)
+close.Position = UDim2.new(1, -43, 0, 15)
+close.BackgroundColor3 = Color3.fromRGB(90, 35, 55)
+close.Text = "×"
+close.TextColor3 = COLORS.White
+close.TextSize = 18
+close.Font = Enum.Font.GothamBold
+close.AutoButtonColor = false
+close.Parent = header
+
+local closeCorner = Instance.new("UICorner")
+closeCorner.CornerRadius = UDim.new(0, 8)
+closeCorner.Parent = close
+
+--========================================================--
+-- CONTENT
+--========================================================--
+
+local content = Instance.new("Frame")
+content.Size = UDim2.new(1, -30, 1, -90)
+content.Position = UDim2.fromOffset(15, 80)
+content.BackgroundTransparency = 1
+content.Parent = main
+
+local function makeLabel(text, y)
+	local l = Instance.new("TextLabel")
+	l.Size = UDim2.new(1, 0, 0, 18)
+	l.Position = UDim2.fromOffset(5, y)
+	l.BackgroundTransparency = 1
+	l.Text = text
+	l.TextColor3 = COLORS.Muted
+	l.TextSize = 11
+	l.Font = Enum.Font.GothamBold
+	l.TextXAlignment = Enum.TextXAlignment.Left
+	l.Parent = content
+	return l
+end
+
+local function makeBox(placeholder, defaultText, y)
+	local b = Instance.new("TextBox")
+	b.Size = UDim2.new(1, 0, 0, 39)
+	b.Position = UDim2.fromOffset(0, y)
+	b.BackgroundColor3 = COLORS.Card2
+	b.BorderSizePixel = 0
+	b.Text = defaultText or ""
+	b.PlaceholderText = placeholder
+	b.PlaceholderColor3 = Color3.fromRGB(105, 110, 130)
+	b.TextColor3 = COLORS.White
+	b.TextSize = 14
+	b.Font = Enum.Font.Gotham
+	b.ClearTextOnFocus = false
+	b.Parent = content
+
+	local c = Instance.new("UICorner")
+	c.CornerRadius = UDim.new(0, 9)
+	c.Parent = b
+
+	local s = Instance.new("UIStroke")
+	s.Color = Color3.fromRGB(55, 60, 90)
+	s.Transparency = 0.2
+	s.Parent = b
+
+	return b
+end
+
+local function makeButton(text, y, color)
+	local b = Instance.new("TextButton")
+	b.Size = UDim2.new(1, 0, 0, 40)
+	b.Position = UDim2.fromOffset(0, y)
+	b.BackgroundColor3 = color
+	b.BorderSizePixel = 0
+	b.Text = text
+	b.TextColor3 = COLORS.White
+	b.TextSize = 13
+	b.Font = Enum.Font.GothamBold
+	b.AutoButtonColor = false
+	b.Parent = content
+
+	local c = Instance.new("UICorner")
+	c.CornerRadius = UDim.new(0, 9)
+	c.Parent = b
+
+	b.MouseEnter:Connect(function()
+		TweenService:Create(
+			b,
+			TweenInfo.new(0.12),
+			{BackgroundColor3 = color:Lerp(Color3.new(1, 1, 1), 0.08)}
+		):Play()
+	end)
+
+	b.MouseLeave:Connect(function()
+		TweenService:Create(
+			b,
+			TweenInfo.new(0.12),
+			{BackgroundColor3 = color}
+		):Play()
+	end)
+
+	return b
+end
+
+--========================================================--
+-- TARGET
+--========================================================--
+
+makeLabel("TARGET PLAYER", 0)
+
+local targetBox = makeBox(
+	"Username / DisplayName",
+	"",
+	21
+)
+
+local sendButton = makeButton(
+	"✦   SEND TRADE REQUEST",
+	66,
+	Color3.fromRGB(45, 82, 155)
+)
+
+--========================================================--
+-- ITEM
+--========================================================--
+
+makeLabel("ITEM KEY", 118)
+
+local itemBox = makeBox(
+	"Contoh: inventory key",
+	"",
+	139
+)
+
+--========================================================--
+-- AMOUNT
+--========================================================--
+
+makeLabel("TARGET AMOUNT", 186)
+
+local amountBox = makeBox(
+	"Jumlah",
+	"300",
+	207
+)
+
+--========================================================--
+-- QUICK AMOUNT
+--========================================================--
+
+makeLabel("QUICK AMOUNT", 255)
+
+local quickFrame = Instance.new("Frame")
+quickFrame.Size = UDim2.new(1, 0, 0, 34)
+quickFrame.Position = UDim2.fromOffset(0, 274)
+quickFrame.BackgroundTransparency = 1
+quickFrame.Parent = content
+
+local quickValues = {200, 300, 500, 1000}
+
+for i, value in ipairs(quickValues) do
+	local q = Instance.new("TextButton")
+
+	q.Size = UDim2.new(0.25, -5, 1, 0)
+	q.Position = UDim2.new((i - 1) * 0.25, 0, 0, 0)
+
+	q.BackgroundColor3 = COLORS.Card2
+	q.BorderSizePixel = 0
+	q.Text = tostring(value)
+	q.TextColor3 = COLORS.White
+	q.TextSize = 11
+	q.Font = Enum.Font.GothamBold
+	q.AutoButtonColor = false
+	q.Parent = quickFrame
+
+	local c = Instance.new("UICorner")
+	c.CornerRadius = UDim.new(0, 7)
+	c.Parent = q
+
+	q.MouseButton1Click:Connect(function()
+		amountBox.Text = tostring(value)
+	end)
+end
+
+--========================================================--
+-- PROGRESS
+--========================================================--
+
+local progressBG = Instance.new("Frame")
+progressBG.Size = UDim2.new(1, 0, 0, 8)
+progressBG.Position = UDim2.fromOffset(0, 319)
+progressBG.BackgroundColor3 = Color3.fromRGB(38, 40, 60)
+progressBG.BorderSizePixel = 0
+progressBG.Parent = content
+
+local progressCorner = Instance.new("UICorner")
+progressCorner.CornerRadius = UDim.new(1, 0)
+progressCorner.Parent = progressBG
+
+local progress = Instance.new("Frame")
+progress.Size = UDim2.new(0, 0, 1, 0)
+progress.BackgroundColor3 = COLORS.Cyan
+progress.BorderSizePixel = 0
+progress.Parent = progressBG
+
+local progressCorner2 = Instance.new("UICorner")
+progressCorner2.CornerRadius = UDim.new(1, 0)
+progressCorner2.Parent = progress
+
+local progressGradient = Instance.new("UIGradient")
+progressGradient.Color = ColorSequence.new({
+	ColorSequenceKeypoint.new(0, COLORS.Purple),
+	ColorSequenceKeypoint.new(0.5, COLORS.Cyan),
+	ColorSequenceKeypoint.new(1, COLORS.Blue),
+})
+progressGradient.Parent = progress
+
+--========================================================--
+-- ACTION BUTTONS
+--========================================================--
+
+local autoButton = makeButton(
+	"⚡   ADD TO TARGET",
+	340,
+	Color3.fromRGB(45, 125, 90)
+)
+
+local stopButton = makeButton(
+	"■   STOP",
+	385,
+	Color3.fromRGB(115, 45, 58)
+)
+
+local acceptButton = makeButton(
+	"✓   ACCEPT",
+	430,
+	Color3.fromRGB(65, 80, 145)
+)
+
+local cancelButton = makeButton(
+	"×   CANCEL TRADE",
+	475,
+	Color3.fromRGB(95, 45, 55)
+)
+
+--========================================================--
+-- STATUS
+--========================================================--
+
+local status = Instance.new("TextLabel")
+status.Size = UDim2.new(1, 0, 0, 25)
+status.Position = UDim2.fromOffset(0, 522)
+status.BackgroundTransparency = 1
+status.Text = "●  READY"
+status.TextColor3 = COLORS.Green
+status.TextSize = 11
+status.Font = Enum.Font.GothamBold
+status.TextXAlignment = Enum.TextXAlignment.Left
+status.Parent = content
+
+--========================================================--
+-- STATE
+--========================================================--
+
+local running = false
+local minimized = false
+local originalSize = main.Size
+local currentTarget = nil
+
+--========================================================--
+-- STATUS
+--========================================================--
+
+local function setStatus(text, color)
+	status.Text = "●  " .. text
+	status.TextColor3 = color or COLORS.Muted
+end
+
+local function setProgress(current, target)
+	if target <= 0 then
+		progress.Size = UDim2.new(0, 0, 1, 0)
+		return
+	end
+
+	local ratio = math.clamp(current / target, 0, 1)
+
+	TweenService:Create(
+		progress,
+		TweenInfo.new(0.1, Enum.EasingStyle.Quad),
+		{Size = UDim2.new(ratio, 0, 1, 0)}
+	):Play()
+end
+
+--========================================================--
+-- FIND PLAYER
+--========================================================--
+
+local function getTarget()
+	local text = targetBox.Text
+	text = text:gsub("^%s+", ""):gsub("%s+$", ""):lower()
+
+	if text == "" then
+		return nil
+	end
+
+	for _, player in ipairs(Players:GetPlayers()) do
+		if player.Name:lower() == text then
+			return player
+		end
+	end
+
+	for _, player in ipairs(Players:GetPlayers()) do
+		if player.DisplayName:lower() == text then
+			return player
+		end
+	end
+
+	for _, player in ipairs(Players:GetPlayers()) do
+		if player.Name:lower():sub(1, #text) == text then
+			return player
+		end
+	end
+
+	return nil
+end
+
+--========================================================--
+-- SEND REQUEST
+--========================================================--
+
+sendButton.MouseButton1Click:Connect(function()
+	local target = getTarget()
+
+	if not target then
+		setStatus("PLAYER NOT FOUND", COLORS.Red)
+		return
+	end
+
+	if target == LocalPlayer then
+		setStatus("CANNOT TRADE WITH YOURSELF", COLORS.Red)
+		return
+	end
+
+	currentTarget = target
+
+	RequestTrade:FireServer(target)
+
+	setStatus(
+		"REQUEST SENT → " .. target.DisplayName,
+		COLORS.Cyan
+	)
+end)
+
+--========================================================--
+-- BULK ADD
+--========================================================--
+
+local function startAutoAdd()
+	if running then
+		return
+	end
+
+	local itemKey = itemBox.Text
+	itemKey = itemKey:gsub("^%s+", ""):gsub("%s+$", "")
+
+	local targetAmount = tonumber(amountBox.Text)
+
+	if itemKey == "" then
+		setStatus("ITEM KEY IS EMPTY", COLORS.Red)
+		return
+	end
+
+	if not targetAmount then
+		setStatus("AMOUNT MUST BE A NUMBER", COLORS.Red)
+		return
+	end
+
+	targetAmount = math.floor(targetAmount)
+
+	if targetAmount <= 0 then
+		setStatus("AMOUNT MUST BE ABOVE 0", COLORS.Red)
+		return
+	end
+
+	running = true
+
+	setProgress(0, targetAmount)
+
+	setStatus(
+		"ADDING " .. itemKey .. " • " .. targetAmount,
+		COLORS.Cyan
+	)
+
+	task.spawn(function()
+
+		--================================================--
+		-- BULK QUANTITY
+		--================================================--
+		-- Server sekarang menerima quantity langsung.
+		-- Jadi 300 item = 1 FireServer, bukan 300 request.
+
+		ChangeOffer:FireServer(itemKey, targetAmount)
+
+		if not running then
+			return
+		end
+
+		setProgress(targetAmount, targetAmount)
+
+		setStatus(
+			"COMPLETED • " ..
+			itemKey ..
+			" x" ..
+			targetAmount,
+			COLORS.Green
+		)
+
+		running = false
+	end)
+end
+
+autoButton.MouseButton1Click:Connect(startAutoAdd)
+
+--========================================================--
+-- STOP
+--========================================================--
+
+stopButton.MouseButton1Click:Connect(function()
+	if running then
+		running = false
+		setStatus("ADD STOPPED", COLORS.Yellow)
+	else
+		setStatus("NOT RUNNING", COLORS.Muted)
+	end
+end)
+
+--========================================================--
+-- ACCEPT
+--========================================================--
+
+acceptButton.MouseButton1Click:Connect(function()
+	AdvanceTrade:FireServer()
+	setStatus("ACCEPT SENT", COLORS.Green)
+end)
+
+--========================================================--
+-- CANCEL
+--========================================================--
+
+cancelButton.MouseButton1Click:Connect(function()
+	running = false
+
+	CancelTrade:FireServer()
+
+	setProgress(0, 1)
+	setStatus("TRADE CANCELLED", COLORS.Red)
+end)
+
+--========================================================--
+-- TRADE EVENTS
+--========================================================--
+
+TradeEvent.OnClientEvent:Connect(function(eventName, data)
+
+	if eventName == "RequestReceived" then
+
+		if data and data.player then
+			setStatus(
+				"INCOMING FROM " .. data.player.DisplayName,
+				COLORS.Yellow
+			)
+		else
+			setStatus(
+				"INCOMING TRADE REQUEST",
+				COLORS.Yellow
+			)
+		end
+
+	elseif eventName == "RequestSent" then
+
+		setStatus(
+			"REQUEST SENT",
+			COLORS.Cyan
+		)
+
+	elseif eventName == "RequestClosed" then
+
+		setStatus(
+			"REQUEST CLOSED",
+			COLORS.Muted
+		)
+
+	elseif eventName == "RequestExpired" then
+
+		setStatus(
+			"REQUEST EXPIRED",
+			COLORS.Red
+		)
+
+	elseif eventName == "Started" then
+
+		running = false
+
+		if data and data.partner then
+			currentTarget = data.partner
+
+			setStatus(
+				"TRADE STARTED • " ..
+				data.partner.DisplayName,
+				COLORS.Green
+			)
+		else
+			setStatus(
+				"TRADE STARTED",
+				COLORS.Green
+			)
+		end
+
+	elseif eventName == "Updated" then
+
+		if data and data.phase then
+
+			local phase = tostring(data.phase)
+
+			if phase == "Countdown" then
+
+				setStatus(
+					"COUNTDOWN...",
+					COLORS.Yellow
+				)
+
+			elseif phase == "Offer" then
+
+				setStatus(
+					"OFFER PHASE",
+					COLORS.Cyan
+				)
+
+			elseif phase == "Confirm" then
+
+				setStatus(
+					"CONFIRM PHASE",
+					COLORS.Yellow
+				)
+
+			else
+
+				setStatus(
+					phase:upper(),
+					COLORS.Muted
+				)
+
+			end
+		end
+
+	elseif eventName == "Ended" then
+
+		running = false
+
+		if data and data.reason then
+			setStatus(
+				"TRADE ENDED • " ..
+				tostring(data.reason),
+				COLORS.Red
+			)
+		else
+			setStatus(
+				"TRADE ENDED",
+				COLORS.Red
+			)
+		end
+	end
+end)
+
+--========================================================--
+-- MINIMIZE
+--========================================================--
+
+local minimizedSize = UDim2.fromOffset(400, 76)
+
+minimize.MouseButton1Click:Connect(function()
+
+	minimized = not minimized
+
+	if minimized then
+
+		minimize.Text = "+"
+
+		content.Visible = false
+
+		TweenService:Create(
+			main,
+			TweenInfo.new(
+				0.22,
+				Enum.EasingStyle.Quart,
+				Enum.EasingDirection.Out
+			),
+			{
+				Size = minimizedSize
+			}
+		):Play()
+
+	else
+
+		minimize.Text = "−"
+
+		content.Visible = true
+
+		TweenService:Create(
+			main,
+			TweenInfo.new(
+				0.22,
+				Enum.EasingStyle.Quart,
+				Enum.EasingDirection.Out
+			),
+			{
+				Size = originalSize
+			}
+		):Play()
+
+	end
+end)
+
+--========================================================--
+-- CLOSE
+--========================================================--
+
+close.MouseButton1Click:Connect(function()
+
+	running = false
+
+	local tween = TweenService:Create(
+		main,
+		TweenInfo.new(
+			0.2,
+			Enum.EasingStyle.Back,
+			Enum.EasingDirection.In
+		),
+		{
+			Size = UDim2.fromOffset(0, 0),
+			Position = UDim2.new(0.5, 0, 0.5, 0)
+		}
+	)
+
+	tween:Play()
+	tween.Completed:Wait()
+
+	gui:Destroy()
+end)
+
+--========================================================--
+-- DRAG
+--========================================================--
+
+local dragging = false
+local dragStart
+local startPosition
+
+header.InputBegan:Connect(function(input)
+
+	if input.UserInputType == Enum.UserInputType.MouseButton1
+		or input.UserInputType == Enum.UserInputType.Touch then
+
+		dragging = true
+		dragStart = input.Position
+		startPosition = main.Position
+
+		input.Changed:Connect(function()
+
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+
+		end)
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+
+	if not dragging then
+		return
+	end
+
+	if input.UserInputType ~= Enum.UserInputType.MouseMovement
+		and input.UserInputType ~= Enum.UserInputType.Touch then
+		return
+	end
+
+	local delta = input.Position - dragStart
+
+	main.Position = UDim2.new(
+		startPosition.X.Scale,
+		startPosition.X.Offset + delta.X,
+		startPosition.Y.Scale,
+		startPosition.Y.Offset + delta.Y
+	)
+end)
+
+--========================================================--
+-- BUTTON PRESS ANIMATION
+--========================================================--
+
+for _, obj in ipairs(content:GetChildren()) do
+
+	if obj:IsA("TextButton") then
+
+		local normalSize = obj.Size
+
+		obj.MouseButton1Down:Connect(function()
+
+			TweenService:Create(
+				obj,
+				TweenInfo.new(0.06),
+				{
+					Size = UDim2.new(
+						normalSize.X.Scale,
+						normalSize.X.Offset - 4,
+						normalSize.Y.Scale,
+						normalSize.Y.Offset - 2
+					)
+				}
+			):Play()
+
+		end)
+
+		obj.MouseButton1Up:Connect(function()
+
+			TweenService:Create(
+				obj,
+				TweenInfo.new(0.06),
+				{
+					Size = normalSize
+				}
+			):Play()
+
+		end)
+	end
+end
+
+--========================================================--
+-- READY
+--========================================================--
+
+setProgress(0, 1)
+setStatus("READY", COLORS.Green)
+
+print("[Gojo Satoru Project] Bulk Trade GUI loaded.")
